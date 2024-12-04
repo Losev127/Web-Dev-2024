@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynasty 8</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        header img {
+            max-width: 200px;
+            margin-bottom: 10px;
+        }
+        header p {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+        nav {
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+        nav a {
+            text-decoration: none;
+            color: #000;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        nav a:hover {
+            color: #007bff;
+        }
+        /* Карточки */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            flex: 1; /* Заполнение оставшегося пространства */
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            justify-content: center; /* Центрирование карточек на узких экранах */
+        }
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card img {
+            width: 100%;
+            height: auto;
+        }
+        .card-body {
+            padding: 15px;
+            text-align: center;
+        }
+        .card h5 {
+            margin: 10px 0;
+            font-size: 1.2rem;
+        }
+        .card p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .card-footer {
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: center;
+        }
+        .card-footer a {
+            text-decoration: none;
+            color: white;
+            background-color: #343a40;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .card-footer a:hover {
+            background-color: #007bff;
+        }
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <a href="#">Dynasty 8</a>
+        <div>
+            <a href="#">Главная</a>
+            <a href="create_adv.html">Разместить объявление</a>
+            <a href="#">Контакты</a>
+        </div>
+    </nav>
+    <!-- Header -->
+    <header>
+        <img src="#" alt="Dynasty 8">
+        <p>Продажа недвижимости</p>
+    </header>
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 40м² Хамовники</h5>
+                    <p>₽40 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 60м² Тушино</h5>
+                    <p>₽18 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 50м² Митино</h5>
+                    <p>₽22 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 80м² Измайлово</h5>
+                    <p>₽35 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 45м² Строгино</h5>
+                    <p>₽28 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+            <div class="card">
+                <img src="#" alt="Квартира">
+                <div class="card-body">
+                    <h5>Квартира 55м² Марьино</h5>
+                    <p>₽19 000 000</p>
+                </div>
+                <div class="card-footer">
+                    <a href="#">Перейти к объявлению</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; Dynasty 8, 2024</p>
+    </footer>
+</body>
+</html>
