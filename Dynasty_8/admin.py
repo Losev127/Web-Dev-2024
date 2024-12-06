@@ -27,6 +27,7 @@ class Apart_imageInline(admin.TabularInline):
 class ApartmentAdmin(admin.ModelAdmin):
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
     inlines = [Apart_imageInline]
+    list_filter = ('district',)  # Фильтрация по району
 
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Rolename, RolenameAdmin)
