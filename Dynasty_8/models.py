@@ -38,6 +38,10 @@ class Adver(models.Model):
         verbose_name_plural = "Объявления"
         verbose_name = _("Объявление")
 
+    def __str__(self):
+        return f"{self.own} ({self.apartment})"
+
+
 class District(models.Model):
     district_name = models.CharField(max_length=20, blank=False, verbose_name="Название района")
     city_name = models.CharField(max_length=20, blank=False, verbose_name="Город")
