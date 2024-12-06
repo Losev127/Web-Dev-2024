@@ -1,5 +1,5 @@
 from django.contrib import admin
-from Dynasty_8.models import Profile, Rolename, Adver, Apartment, Disrtict, City, Image, Apart_image
+from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City, Image, Apart_image
 
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('eEmail', 'phoneNumber', 'roleName')
@@ -9,8 +9,8 @@ class ProfileAdmin(admin.ModelAdmin):
 class RolenameAdmin(admin.ModelAdmin):
     list_display = ('name',)
     
-class DisrtictAdmin(admin.ModelAdmin):
-    list_display = ('dictrict_name', 'city_name')
+class DistrictAdmin(admin.ModelAdmin):
+    list_display = ('district_name', 'city_name')
     list_filter = ('city_name',)
 
 class CityAdmin(admin.ModelAdmin):
@@ -22,12 +22,16 @@ class ImageAdmin(admin.ModelAdmin):
 class Apart_imageInline(admin.TabularInline):
     model = Apart_image
     extra = 1
-    raw_id_fields = ('adver_id', 'image_id')
+    raw_id_fields = ('image',)
+
+class ApartmentAdmin(admin.ModelAdmin):
+    list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
+    inlines = [Apart_imageInline]
 
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Rolename, RolenameAdmin)
 admin.site.register(Adver)
-admin.site.register(Apartment)
-admin.site.register(Disrtict, DisrtictAdmin)
+admin.site.register(Apartment, ApartmentAdmin)
+admin.site.register(District, DistrictAdmin)
 admin.site.register(City, CityAdmin)
 admin.site.register(Image, ImageAdmin)
