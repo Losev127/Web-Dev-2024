@@ -16,11 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Dynasty_8.views import index_page, create_adv
+from Dynasty_8.views import index_page, create_adv, create_app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index_page, name='index_page'),
     path('create/', create_adv, name='create_adv'),
+    path('new_app/', create_app, name='create_app'),
 ]
-
