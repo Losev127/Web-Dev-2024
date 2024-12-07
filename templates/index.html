@@ -105,12 +105,22 @@
     <div class="container">
         <!-- Форма для фильтров -->
         <form method="get" action="{% url 'index_page' %}">
-            <button type="submit" name="filter" value="all">Все объявления</button>
-            <button type="submit" name="filter" value="below_2000000">Цена ниже 2,000,000</button>
-            <button type="submit" name="filter" value="mortgage">С возможностью ипотеки</button>
-        </form>
+            <button type="submit" name="filter" value="all" 
+                    {% if current_filter == "all" %}style="background-color: #007bff; color: white;"{% endif %}>
+                Все объявления
+            </button>
+            <button type="submit" name="filter" value="below_2000000" 
+                    {% if current_filter == "below_2000000" %}style="background-color: #007bff; color: white;"{% endif %}>
+                Цена ниже 2,000,000
+            </button>
+            <button type="submit" name="filter" value="mortgage" 
+                    {% if current_filter == "mortgage" %}style="background-color: #007bff; color: white;"{% endif %}>
+                С возможностью ипотеки
+            </button>
+        </form>    
+        <!-- Список объявлений -->
         <div class="grid">
-            {% for adver in adverts %}
+            {% for adver in page_obj %}
             <div class="card">
                 {% if adver.image %}
                     <img src="{{ adver.image.url }}" alt="Изображение квартиры">
@@ -132,8 +142,22 @@
             <p>Нет объявлений, соответствующих фильтру.</p>
             {% endfor %}
         </div>
-    </div>
-
+    
+        <!-- Пагинация -->
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if current_filter %}&filter={{ current_filter }}{% endif %}">&laquo; Первая</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Предыдущая</a>
+            {% endif %}
+    
+            <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+    
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Следующая</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Последняя &raquo;</a>
+            {% endif %}
+        </div>
+    </div> 
     <footer class="footer">
         <p>&copy; Dynasty 8, 2024</p>
     </footer>
