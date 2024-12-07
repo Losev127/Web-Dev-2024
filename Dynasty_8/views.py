@@ -6,11 +6,27 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Adver, Apartment, District, Profile
 from .serializers import AdverSerializer, ApartmentSerializer, DistrictSerializer, ProfileSerializer
+from django.db.models import Q
 
 
 def index_page(request):
-    adverts = Adver.objects.all()
-    return render(request, 'index.html', {'adverts': adverts})
+    # Получение выбранного фильтра из GET-запроса, по умолчанию "all"
+    filter_type = request.GET.get('filter', 'all')
+
+    # Применение фильтров
+    if filter_type == 'below_2000000':
+        adverts = Adver.objects.filter(price__lt=2000000)
+    elif filter_type == 'mortgage':
+        adverts = Adver.objects.filter(mortgage=True)
+    else:  # Если фильтр "all" или отсутствует, показываем все объявления
+        adverts = Adver.objects.all()
+
+    # Передача отфильтрованных данных в шаблон
+    return render(request, 'index.html', {
+        'adverts': adverts,
+        'current_filter': filter_type  # Для отображения текущего фильтра в шаблоне
+    })
+
 
 def create_adv(request):
     return render(request, 'create_adv.html')
