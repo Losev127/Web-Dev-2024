@@ -19,7 +19,8 @@ from django.urls import path
 from Dynasty_8.views import (
     index_page, create_adv, create_app,
     AdverListCreateAPIView, ApartmentListCreateAPIView,
-    DistrictListCreateAPIView, ProfileListCreateAPIView
+    DistrictListCreateAPIView, ProfileListCreateAPIView,
+    AdverSearchAPIView
 )
 
 from django.conf import settings
@@ -36,6 +37,7 @@ urlpatterns = [
     path('api/apartments/', ApartmentListCreateAPIView.as_view(), name='api_apartments'),
     path('api/districts/', DistrictListCreateAPIView.as_view(), name='api_districts'),
     path('api/profiles/', ProfileListCreateAPIView.as_view(), name='api_profiles'),
+    path('api/adverts/search/', AdverSearchAPIView.as_view(), name='adver_search'),
 ]
 
 if settings.DEBUG:
