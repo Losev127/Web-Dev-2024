@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import Adver, Apartment, District
+from django.shortcuts import render, redirect
+
 
 def index_page(request):
-    return render(request, 'index.html')
+    adverts = Adver.objects.all()
+    return render(request, 'index.html', {'adverts': adverts})
 
 def create_adv(request):
     return render(request, 'create_adv.html')
@@ -16,7 +19,7 @@ def create_adv(request):
         score = request.POST.get('score')
         apartment_id = request.POST.get('apartment')
         apartment = Apartment.objects.get(id=apartment_id)
-        image = request.POST.get('image')
+        image = request.FILES.get('image')
 
         # Создание нового объявления
         Adver.objects.create(
