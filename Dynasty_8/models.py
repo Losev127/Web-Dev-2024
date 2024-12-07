@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
+from simple_history.models import HistoricalRecords
 
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
@@ -34,6 +35,9 @@ class Adver(models.Model):
     )
     score = models.IntegerField(blank=False, verbose_name="Рейтинг квартиры от риелтора")
     apartment = models.ForeignKey('Apartment', on_delete=models.CASCADE, related_name='adverts', verbose_name="Квартира")
+
+    # История изменений
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name_plural = "Объявления"
