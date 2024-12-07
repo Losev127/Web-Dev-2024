@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
+from django.core.exceptions import ValidationError
 
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
@@ -38,6 +39,11 @@ class Adver(models.Model):
         verbose_name_plural = "Объявления"
         verbose_name = _("Объявление")
 
+    def clean(self):
+        # Проверка цены
+        if self.price < 1000000:
+            raise ValidationError("Цена не может быть ниже 1,000,000.")
+
     def __str__(self):
         return f"{self.own} ({self.apartment})"
 
@@ -55,7 +61,7 @@ class District(models.Model):
 
 class Apartment(models.Model):
     floor_app = models.IntegerField(blank=False, verbose_name="Этаж")
-    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='apartments', verbose_name="Район")
+    district = models.ForeignKey('District', on_delete=models.CASCADE, related_name='apartments', verbose_name="Район")
     area = models.IntegerField(blank=False, verbose_name="Площадь кв.м.")
     room_quantity = models.IntegerField(blank=False, verbose_name="Кол-во комнат")
     address = models.CharField(max_length=50, blank=False, verbose_name="Адрес")
@@ -65,6 +71,13 @@ class Apartment(models.Model):
     class Meta:
         verbose_name_plural = "Квартиры"
         verbose_name = _("Квартира")
+
+    def clean(self):
+        # Проверка, что room_quantity и floor_app — целые числа (уже гарантируется IntegerField)
+        if not isinstance(self.room_quantity, int):
+            raise ValidationError("Количество комнат должно быть целым числом.")
+        if not isinstance(self.floor_app, int):
+            raise ValidationError("Этаж должен быть целым числом.")
 
     def __str__(self):
         return f"Квартира ({self.address})"
@@ -87,4 +100,3 @@ class Apart_image(models.Model):
 
     class Meta:
         verbose_name_plural = "Фото_квартиры"
-
