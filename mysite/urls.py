@@ -15,29 +15,34 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from Dynasty_8.views import (
     index_page, create_adv, create_app,
-    AdverListCreateAPIView, ApartmentListCreateAPIView,
-    DistrictListCreateAPIView, ProfileListCreateAPIView,
-    AdverSearchAPIView
+    ApartmentListCreateAPIView, DistrictListCreateAPIView,
+    ProfileListCreateAPIView, AdverSearchAPIView, AdverViewSet
 )
-
 from django.conf import settings
 from django.conf.urls.static import static
+from rest_framework.routers import DefaultRouter
+
+# Роутер для ViewSet
+router = DefaultRouter()
+router.register(r'adverts', AdverViewSet, basename='adverts')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index_page, name='index_page'),
     path('create/', create_adv, name='create_adv'),
     path('new_app/', create_app, name='create_app'),
-    
+
     # API маршруты
-    path('api/adverts/', AdverListCreateAPIView.as_view(), name='api_adverts'),
     path('api/apartments/', ApartmentListCreateAPIView.as_view(), name='api_apartments'),
     path('api/districts/', DistrictListCreateAPIView.as_view(), name='api_districts'),
     path('api/profiles/', ProfileListCreateAPIView.as_view(), name='api_profiles'),
     path('api/adverts/search/', AdverSearchAPIView.as_view(), name='adver_search'),
+
+    # Добавление маршрутов из DefaultRouter с префиксом "api/"
+    path('api/', include(router.urls)),
 ]
 
 if settings.DEBUG:
