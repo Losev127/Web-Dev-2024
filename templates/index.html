@@ -103,14 +103,20 @@
     </nav>
 
     <div class="container">
+        <!-- Форма для фильтров -->
+        <form method="get" action="{% url 'index_page' %}">
+            <button type="submit" name="filter" value="all">Все объявления</button>
+            <button type="submit" name="filter" value="below_2000000">Цена ниже 2,000,000</button>
+            <button type="submit" name="filter" value="mortgage">С возможностью ипотеки</button>
+        </form>
         <div class="grid">
             {% for adver in adverts %}
             <div class="card">
                 {% if adver.image %}
-                <img src="{{ adver.image.url }}" alt="Изображение квартиры">
-            {% else %}
-                <img src="/static/images/placeholder.jpg" alt="Изображения Нет">
-            {% endif %}
+                    <img src="{{ adver.image.url }}" alt="Изображение квартиры">
+                {% else %}
+                    <img src="/static/images/placeholder.jpg" alt="Изображения Нет">
+                {% endif %}
                 <div class="card-body">
                     <h5>{{ adver.apartment.address }} - {{ adver.apartment.area }} м²</h5>
                     <p>Цена: ₽{{ adver.price }}</p>
@@ -121,7 +127,9 @@
                 <div class="card-footer">
                     <a href="#">Подробнее</a>
                 </div>
-            </div>          
+            </div>
+            {% empty %}
+            <p>Нет объявлений, соответствующих фильтру.</p>
             {% endfor %}
         </div>
     </div>
