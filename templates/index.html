@@ -15,20 +15,6 @@
             flex-direction: column;
             min-height: 100vh;
         }
-        header {
-            background-color: #343a40;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        header img {
-            max-width: 200px;
-            margin-bottom: 10px;
-        }
-        header p {
-            font-size: 1.2rem;
-            margin: 0;
-        }
         nav {
             background-color: #f8f9fa;
             padding: 10px 20px;
@@ -46,18 +32,17 @@
         nav a:hover {
             color: #007bff;
         }
-        /* Карточки */
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
-            flex: 1; /* Заполнение оставшегося пространства */
+            flex: 1;
         }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
-            justify-content: center; /* Центрирование карточек на узких экранах */
+            justify-content: center;
         }
         .card {
             background: white;
@@ -68,7 +53,8 @@
         }
         .card img {
             width: 100%;
-            height: auto;
+            height: 200px;
+            object-fit: cover;
         }
         .card-body {
             padding: 15px;
@@ -107,85 +93,39 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <nav>
         <a href="#">Dynasty 8</a>
         <div>
             <a href="{% url 'index_page' %}">Главная</a>
             <a href="{% url 'create_adv' %}">Разместить объявление</a>
-            <a href="#">Контакты</a>          
+            <a href="{% url 'create_app' %}">Добавить квартиру</a>     
         </div>
     </nav>
-    <!-- Header -->
-    <header>
-        <img src="#" alt="Dynasty 8">
-        <p>Продажа недвижимости</p>
-    </header>
+
     <div class="container">
         <div class="grid">
+            {% for adver in adverts %}
             <div class="card">
-                <img src="#" alt="Квартира">
+                {% if adver.image %}
+                <img src="{{ adver.image.url }}" alt="Изображение квартиры">
+            {% else %}
+                <img src="/static/images/placeholder.jpg" alt="Изображения Нет">
+            {% endif %}
                 <div class="card-body">
-                    <h5>Квартира 40м² Хамовники</h5>
-                    <p>₽40 000 000</p>
+                    <h5>{{ adver.apartment.address }} - {{ adver.apartment.area }} м²</h5>
+                    <p>Цена: ₽{{ adver.price }}</p>
+                    <p>Владелец: {{ adver.own }}</p>
+                    <p>Ипотека: {% if adver.mortgage %}Есть{% else %}Нет{% endif %}</p>
+                    <p>Рейтинг: {{ adver.score }}</p>
                 </div>
                 <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
+                    <a href="#">Подробнее</a>
                 </div>
-            </div>
-            <div class="card">
-                <img src="#" alt="Квартира">
-                <div class="card-body">
-                    <h5>Квартира 60м² Тушино</h5>
-                    <p>₽18 000 000</p>
-                </div>
-                <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
-                </div>
-            </div>
-            <div class="card">
-                <img src="#" alt="Квартира">
-                <div class="card-body">
-                    <h5>Квартира 50м² Митино</h5>
-                    <p>₽22 000 000</p>
-                </div>
-                <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
-                </div>
-            </div>
-            <div class="card">
-                <img src="#" alt="Квартира">
-                <div class="card-body">
-                    <h5>Квартира 80м² Измайлово</h5>
-                    <p>₽35 000 000</p>
-                </div>
-                <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
-                </div>
-            </div>
-            <div class="card">
-                <img src="#" alt="Квартира">
-                <div class="card-body">
-                    <h5>Квартира 45м² Строгино</h5>
-                    <p>₽28 000 000</p>
-                </div>
-                <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
-                </div>
-            </div>
-            <div class="card">
-                <img src="#" alt="Квартира">
-                <div class="card-body">
-                    <h5>Квартира 55м² Марьино</h5>
-                    <p>₽19 000 000</p>
-                </div>
-                <div class="card-footer">
-                    <a href="#">Перейти к объявлению</a>
-                </div>
-            </div>
+            </div>          
+            {% endfor %}
         </div>
     </div>
-    <!-- Footer -->
+
     <footer class="footer">
         <p>&copy; Dynasty 8, 2024</p>
     </footer>
