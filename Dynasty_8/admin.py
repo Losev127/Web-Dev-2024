@@ -1,5 +1,6 @@
 from django.contrib import admin
 from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City, Image, Apart_image
+from simple_history.admin import SimpleHistoryAdmin
 
 
 class ProfileAdmin(admin.ModelAdmin):
@@ -43,10 +44,15 @@ class AdverAdmin(admin.ModelAdmin):
     list_filter = ('date_created',)  # Фильтрация по дате публикации
     search_fields = ('own', 'apartment__address')  # Поиск по владельцу и адресу квартиры
 
+class AdverAdmin(SimpleHistoryAdmin):
+    list_display = ('own', 'price', 'date_created', 'apartment', 'mortgage', 'score')
+    list_filter = ('date_created',)
+    search_fields = ('own', 'apartment__address')
+
 
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(Rolename, RolenameAdmin)
-admin.site.register(Adver, AdverAdmin)  # Используем AdverAdmin
+admin.site.register(Adver, AdverAdmin)
 admin.site.register(Apartment, ApartmentAdmin)
 admin.site.register(District, DistrictAdmin)
 admin.site.register(City, CityAdmin)
