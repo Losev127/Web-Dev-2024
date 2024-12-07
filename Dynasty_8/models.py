@@ -25,7 +25,7 @@ class Adver(models.Model):
     price = models.IntegerField(blank=False, verbose_name="Цена")
     date_created = models.DateField(blank=False, verbose_name="Дата публикации")
     own = models.CharField(max_length=20, blank=False, verbose_name="Владелец")
-    image = models.CharField(max_length=20, blank=False, verbose_name="Фотография")
+    image = models.ImageField(upload_to='adver_images/', blank=False, verbose_name="Фотография")
     mortgage = models.BooleanField(
         default=False,
         verbose_name="Ипотека",
@@ -56,7 +56,7 @@ class District(models.Model):
 class Apartment(models.Model):
     floor_app = models.IntegerField(blank=False, verbose_name="Этаж")
     district = models.ForeignKey(District, on_delete=models.CASCADE, related_name='apartments', verbose_name="Район")
-    area = models.IntegerField(blank=False, verbose_name="Площадь")
+    area = models.IntegerField(blank=False, verbose_name="Площадь кв.м.")
     room_quantity = models.IntegerField(blank=False, verbose_name="Кол-во комнат")
     address = models.CharField(max_length=50, blank=False, verbose_name="Адрес")
     description = models.TextField(max_length=100, blank=False, verbose_name="Описание")
