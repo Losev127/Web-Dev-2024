@@ -1,6 +1,4 @@
 from django.shortcuts import render, redirect
-from .models import Adver, Apartment, District
-from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +6,8 @@ from .models import Adver, Apartment, District, Profile
 from .serializers import AdverSerializer, ApartmentSerializer, DistrictSerializer, ProfileSerializer
 from django.db.models import Q
 from django.core.paginator import Paginator
+from rest_framework.generics import ListAPIView
+from rest_framework.filters import SearchFilter
 
 
 def index_page(request):
@@ -143,3 +143,9 @@ class ProfileListCreateAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AdverSearchAPIView(ListAPIView):
+    queryset = Adver.objects.all()
+    serializer_class = AdverSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ['own', 'apartment__address', 'apartment__description']
