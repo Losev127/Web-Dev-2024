@@ -7,6 +7,7 @@ from rest_framework import status
 from .models import Adver, Apartment, District, Profile
 from .serializers import AdverSerializer, ApartmentSerializer, DistrictSerializer, ProfileSerializer
 from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 def index_page(request):
@@ -21,11 +22,17 @@ def index_page(request):
     else:  # Если фильтр "all" или отсутствует, показываем все объявления
         adverts = Adver.objects.all()
 
-    # Передача отфильтрованных данных в шаблон
+    # Пагинация: 5 объявлений на страницу
+    paginator = Paginator(adverts, 5)
+    page_number = request.GET.get('page')  # Получение текущей страницы
+    page_obj = paginator.get_page(page_number)  # Получение объектов для текущей страницы
+
+    # Передача данных в шаблон
     return render(request, 'index.html', {
-        'adverts': adverts,
-        'current_filter': filter_type  # Для отображения текущего фильтра в шаблоне
+        'page_obj': page_obj,
+        'current_filter': filter_type  # Для отображения текущего фильтра
     })
+
 
 
 def create_adv(request):
