@@ -16,7 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from Dynasty_8.views import index_page, create_adv, create_app
+from Dynasty_8.views import (
+    index_page, create_adv, create_app,
+    AdverListCreateAPIView, ApartmentListCreateAPIView,
+    DistrictListCreateAPIView, ProfileListCreateAPIView
+)
+
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -25,6 +30,12 @@ urlpatterns = [
     path('', index_page, name='index_page'),
     path('create/', create_adv, name='create_adv'),
     path('new_app/', create_app, name='create_app'),
+    
+    # API маршруты
+    path('api/adverts/', AdverListCreateAPIView.as_view(), name='api_adverts'),
+    path('api/apartments/', ApartmentListCreateAPIView.as_view(), name='api_apartments'),
+    path('api/districts/', DistrictListCreateAPIView.as_view(), name='api_districts'),
+    path('api/profiles/', ProfileListCreateAPIView.as_view(), name='api_profiles'),
 ]
 
 if settings.DEBUG:
