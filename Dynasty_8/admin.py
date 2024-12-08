@@ -3,6 +3,8 @@ from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City
 from simple_history.admin import SimpleHistoryAdmin
 from import_export.admin import ExportMixin
 from import_export import resources
+from django.utils.html import format_html
+from django.urls import reverse
 
 class AdverResource(resources.ModelResource):
     class Meta:
@@ -65,8 +67,13 @@ class DistrictAdmin(admin.ModelAdmin):
 
 
 class CityAdmin(admin.ModelAdmin):
-    list_display = ('city_name', 'region_number')
+    list_display = ('city_name', 'formatted_region_number')
     list_filter = ('region_number',)  # Фильтрация по региону
+    
+    def formatted_region_number(self, obj):
+        return f"{obj.region_number}"
+
+    formatted_region_number.short_description = "Номер региона"
 
 
 class ImageAdmin(admin.ModelAdmin):
@@ -79,11 +86,27 @@ class Apart_imageInline(admin.TabularInline):
     raw_id_fields = ('image',)
 
 
+class AdverInline(admin.TabularInline):
+    model = Adver
+    fields = ('own', 'price', 'date_created', 'mortgage', 'score', 'adver_link')
+    readonly_fields = ('adver_link',)
+    extra = 0
+
+    def adver_link(self, obj):
+        if obj.id:
+            url = reverse("admin:Dynasty_8_adver_change", args=[obj.id])
+            return format_html('<a href="{}">Перейти к объявлению</a>', url)
+        return "Нет объявления"
+
+    adver_link.short_description = "Ссылка на объявление"
+
+
 class ApartmentAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = ApartmentResource
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
-    inlines = [Apart_imageInline]
-    list_filter = ('district',)  # Фильтрация по району
+    inlines = [Apart_imageInline, AdverInline]
+    list_filter = ('district',)
+
 
 
 class AdverAdmin(ExportMixin, admin.ModelAdmin):
@@ -96,6 +119,11 @@ class AdverAdmin(SimpleHistoryAdmin):
     list_display = ('own', 'price', 'date_created', 'apartment', 'mortgage', 'score')
     list_filter = ('date_created',)
     search_fields = ('own', 'apartment__address')
+
+def apartment_link(self, obj):
+    url = reverse("admin:yourapp_apartment_change", args=[obj.apartment.id])
+    return format_html('<a href="{}">{}</a>', url, obj.apartment.address)
+apartment_link.short_description = "Квартира"  # Название колонки
 
 
 admin.site.register(Profile, ProfileAdmin)
