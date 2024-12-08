@@ -1,7 +1,53 @@
 from django.contrib import admin
 from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City, Image, Apart_image
 from simple_history.admin import SimpleHistoryAdmin
+from import_export.admin import ExportMixin
+from import_export import resources
 
+class AdverResource(resources.ModelResource):
+    class Meta:
+        model = Adver
+        fields = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment')
+        export_order = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment')
+
+    # Метод для фильтрации набора данных при экспорте
+    def get_export_queryset(self, queryset, **kwargs):
+        # Возвращаем только активные объявления
+        return queryset.filter(mortgage=True)
+
+    # Метод для изменения формата поля `price`
+    def dehydrate_price(self, adver):
+        # Преобразуем цену в строку с валютой
+        return f"{adver.price} ₽"
+
+    # Метод для добавления вычисляемого поля
+    def get_full_info(self, adver):
+        # Возвращаем строку с полной информацией об объекте
+        return f"{adver.own} - {adver.apartment} (Рейтинг: {adver.score})"
+
+class ApartmentResource(resources.ModelResource):
+    class Meta:
+        model = Apartment
+        fields = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description')
+        export_order = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description')
+
+    # Метод для фильтрации набора данных при экспорте
+    def get_export_queryset(self, queryset, **kwargs):
+        # Возвращаем только квартиры с площадью больше 50 кв.м.
+        return queryset.filter(area__gt=50)
+
+    # Метод для изменения формата поля `area` (площадь)
+    def dehydrate_area(self, apartment):
+        # Добавляем "кв.м." к значению площади
+        return f"{apartment.area} кв.м."
+
+    # Метод для добавления вычисляемого поля
+    def get_full_info(self, apartment):
+        # Возвращаем строку с полной информацией о квартире
+        return (
+            f"Адрес: {apartment.address}, Район: {apartment.district}, "
+            f"Площадь: {apartment.area} кв.м., Этаж: {apartment.floor_app}"
+        )
 
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('eEmail', 'phoneNumber', 'roleName')
@@ -33,13 +79,15 @@ class Apart_imageInline(admin.TabularInline):
     raw_id_fields = ('image',)
 
 
-class ApartmentAdmin(admin.ModelAdmin):
+class ApartmentAdmin(ExportMixin, admin.ModelAdmin):
+    resource_class = ApartmentResource
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
     inlines = [Apart_imageInline]
     list_filter = ('district',)  # Фильтрация по району
 
 
-class AdverAdmin(admin.ModelAdmin):
+class AdverAdmin(ExportMixin, admin.ModelAdmin):
+    resource_class = AdverResource
     list_display = ('own', 'price', 'date_created', 'apartment', 'mortgage', 'score')
     list_filter = ('date_created',)  # Фильтрация по дате публикации
     search_fields = ('own', 'apartment__address')  # Поиск по владельцу и адресу квартиры
