@@ -5,55 +5,80 @@ from import_export.admin import ExportMixin
 from import_export import resources
 from django.utils.html import format_html
 from django.urls import reverse
+from django.http import HttpResponse
+
 
 class AdverResource(resources.ModelResource):
     class Meta:
         model = Adver
-        fields = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment')
-        export_order = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment')
+        fields = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment', 'full_info')
+        export_order = ('id', 'price', 'date_created', 'own', 'mortgage', 'score', 'apartment', 'full_info')
 
-    # Метод для фильтрации набора данных при экспорте
+    def get_export_fields(self, resource=None):
+        fields = super().get_export_fields(resource)
+        custom_headers = {
+            'id': 'ID',
+            'price': 'Цена',
+            'date_created': 'Дата публикации',
+            'own': 'Владелец',
+            'mortgage': 'Ипотека',
+            'score': 'Рейтинг',
+            'apartment': 'Квартира',
+            'full_info': 'Полная информация'
+        }
+        for field in fields:
+            if field.column_name in custom_headers:
+                field.column_name = custom_headers[field.column_name]
+        return fields
+
+    # Фильтруем объявления с ипотекой
     def get_export_queryset(self, queryset, **kwargs):
-        # Возвращаем только активные объявления
+        # Фильтруем только те объявления, где mortgage=True
         return queryset.filter(mortgage=True)
 
-    # Метод для изменения формата поля `price`
-    def dehydrate_price(self, adver):
-        # Преобразуем цену в строку с валютой
-        return f"{adver.price} ₽"
+    def dehydrate_price(self, obj):
+        return f"{obj.price} ₽"
 
-    # Метод для добавления вычисляемого поля
-    def get_full_info(self, adver):
-        # Возвращаем строку с полной информацией об объекте
-        return f"{adver.own} - {adver.apartment} (Рейтинг: {adver.score})"
+    def dehydrate_date_created(self, obj):
+        return obj.date_created.strftime('%d-%m-%Y')
+
+    def dehydrate_full_info(self, obj):
+        return f"Владелец: {obj.own}, Квартира: {obj.apartment.address if obj.apartment else 'Нет'}, Цена: {obj.price} ₽"
+
 
 class ApartmentResource(resources.ModelResource):
     class Meta:
         model = Apartment
-        fields = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description')
-        export_order = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description')
+        fields = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description', 'full_info')
+        export_order = ('id', 'address', 'district', 'area', 'room_quantity', 'floor_app', 'description', 'full_info')
 
-    # Метод для фильтрации набора данных при экспорте
-    def get_export_queryset(self, queryset, **kwargs):
-        # Возвращаем только квартиры с площадью больше 50 кв.м.
-        return queryset.filter(area__gt=50)
+    def get_export_fields(self, resource=None):
+        fields = super().get_export_fields(resource)
+        custom_headers = {
+            'id': 'ID',
+            'address': 'Адрес',
+            'district': 'Район',
+            'area': 'Площадь (кв.м.)',
+            'room_quantity': 'Количество комнат',
+            'floor_app': 'Этаж',
+            'description': 'Описание',
+            'full_info': 'Полная информация'
+        }
+        for field in fields:
+            if field.column_name in custom_headers:
+                field.column_name = custom_headers[field.column_name]
+        return fields
 
-    # Метод для изменения формата поля `area` (площадь)
-    def dehydrate_area(self, apartment):
-        # Добавляем "кв.м." к значению площади
-        return f"{apartment.area} кв.м."
-
-    # Метод для добавления вычисляемого поля
-    def get_full_info(self, apartment):
-        # Возвращаем строку с полной информацией о квартире
+    def dehydrate_full_info(self, obj):
         return (
-            f"Адрес: {apartment.address}, Район: {apartment.district}, "
-            f"Площадь: {apartment.area} кв.м., Этаж: {apartment.floor_app}"
+            f"Адрес: {obj.address}, Район: {obj.district.district_name if obj.district else 'Не указан'}, "
+            f"Площадь: {obj.area} кв.м., Этаж: {obj.floor_app}"
         )
+
 
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('eEmail', 'phoneNumber', 'roleName')
-    list_filter = ('roleName',) # Фильтрация по статусу
+    list_filter = ('roleName',)  # Фильтрация по статусу
     search_fields = ('eEmail', 'phoneNumber',) 
 
 
@@ -104,26 +129,29 @@ class AdverInline(admin.TabularInline):
 class ApartmentAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = ApartmentResource
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
-    inlines = [Apart_imageInline, AdverInline]
     list_filter = ('district',)
 
 
-
-class AdverAdmin(ExportMixin, admin.ModelAdmin):
+class AdverAdmin(ExportMixin, SimpleHistoryAdmin, admin.ModelAdmin):
     resource_class = AdverResource
     list_display = ('own', 'price', 'date_created', 'apartment', 'mortgage', 'score')
     list_filter = ('date_created',)  # Фильтрация по дате публикации
     search_fields = ('own', 'apartment__address')  # Поиск по владельцу и адресу квартиры
 
-class AdverAdmin(SimpleHistoryAdmin):
-    list_display = ('own', 'price', 'date_created', 'apartment', 'mortgage', 'score')
-    list_filter = ('date_created',)
-    search_fields = ('own', 'apartment__address')
+    actions = ['export_mortgage_ads']
 
-def apartment_link(self, obj):
-    url = reverse("admin:yourapp_apartment_change", args=[obj.apartment.id])
-    return format_html('<a href="{}">{}</a>', url, obj.apartment.address)
-apartment_link.short_description = "Квартира"  # Название колонки
+    def export_mortgage_ads(self, request, queryset):
+        resource = self.resource_class()
+        queryset = resource.get_export_queryset(queryset, filter_mortgage=True)
+        dataset = resource.export(queryset)
+
+        # Используем формат `xlsx` для экспорта
+        response = HttpResponse(dataset.xlsx, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="adverts_with_mortgage.xlsx"'
+        return response
+
+    export_mortgage_ads.short_description = "Экспортировать объявления с ипотекой"
+
 
 
 admin.site.register(Profile, ProfileAdmin)
