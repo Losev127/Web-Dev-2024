@@ -105,19 +105,32 @@
     <div class="container">
         <!-- Форма для фильтров -->
         <form method="get" action="{% url 'index_page' %}">
-            <button type="submit" name="filter" value="all" 
-                    {% if current_filter == "all" %}style="background-color: #007bff; color: white;"{% endif %}>
-                Все объявления
-            </button>
-            <button type="submit" name="filter" value="below_2000000" 
-                    {% if current_filter == "below_2000000" %}style="background-color: #007bff; color: white;"{% endif %}>
-                Цена ниже 2,000,000
-            </button>
-            <button type="submit" name="filter" value="mortgage" 
-                    {% if current_filter == "mortgage" %}style="background-color: #007bff; color: white;"{% endif %}>
-                С возможностью ипотеки
-            </button>
-        </form>    
+            <div>
+                <label for="price_min">Минимальная цена:</label>
+                <input type="number" id="price_min" name="price_min" value="{{ price_min }}">
+            </div>
+            <div>
+                <label for="price_max">Максимальная цена:</label>
+                <input type="number" id="price_max" name="price_max" value="{{ price_max }}">
+            </div>
+            <div>
+                <label for="mortgage">Ипотека:</label>
+                <select id="mortgage" name="mortgage">
+                    <option value="">Не выбрано</option>
+                    <option value="True" {% if mortgage == 'True' %}selected{% endif %}>Есть</option>
+                    <option value="False" {% if mortgage == 'False' %}selected{% endif %}>Нет</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" name="filter" value="all">Показать все</button>
+                <button type="submit" name="filter" value="below_2000000">Объявления до 2,000,000</button>
+                <button type="submit" name="filter" value="mortgage">Только с ипотекой</button>
+                <button type="submit" name="filter" value="good_deals">Выгодные предложения</button>
+            </div>
+            <div>
+                <button type="submit">Применить фильтры</button>
+            </div>
+        </form>       
         <!-- Список объявлений -->
         <div class="grid">
             {% for adver in page_obj %}
