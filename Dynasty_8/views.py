@@ -10,21 +10,43 @@ from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
+from django.shortcuts import get_object_or_404
 
 
-
-
-def index_page(request):
-    # Получение выбранного фильтра из GET-запроса, по умолчанию "all"
+def index_page(request): 
+    # Получение выбранных фильтров из GET-запроса, по умолчанию "all"
     filter_type = request.GET.get('filter', 'all')
+    price_min = request.GET.get('price_min', None)
+    price_max = request.GET.get('price_max', None)
+    mortgage = request.GET.get('mortgage', None)
 
-    # Применение фильтров
+    # Создание объекта Q для комбинирования фильтров
+    filter_conditions = Q()
+
+    # Фильтрация по цене
+    if price_min:
+        filter_conditions &= Q(price__gte=price_min)
+    if price_max:
+        filter_conditions &= Q(price__lte=price_max)
+    
+    # Фильтрация по ипотеке
+    if mortgage == 'True':
+        filter_conditions &= Q(mortgage=True)
+    elif mortgage == 'False':
+        filter_conditions &= Q(mortgage=False)
+
+    # Фильтрация по типу
     if filter_type == 'below_2000000':
-        adverts = Adver.objects.filter(price__lt=2000000)
+        filter_conditions &= Q(price__lt=2000000)
     elif filter_type == 'mortgage':
-        adverts = Adver.objects.filter(mortgage=True)
-    else:  # Если фильтр "all" или отсутствует, показываем все объявления
-        adverts = Adver.objects.all()
+        filter_conditions &= Q(mortgage=True)
+
+    # Фильтр: "Выгодные предложения"
+    elif filter_type == 'good_deals':
+        filter_conditions &= (Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5)
+
+    # Получаем объявления с применёнными фильтрами
+    adverts = Adver.objects.filter(filter_conditions)
 
     # Пагинация: 5 объявлений на страницу
     paginator = Paginator(adverts, 5)
@@ -34,9 +56,11 @@ def index_page(request):
     # Передача данных в шаблон
     return render(request, 'index.html', {
         'page_obj': page_obj,
-        'current_filter': filter_type  # Для отображения текущего фильтра
+        'current_filter': filter_type,  # Для отображения текущего фильтра
+        'price_min': price_min,  # Для сохранения значения фильтра в форме
+        'price_max': price_max,
+        'mortgage': mortgage
     })
-
 
 
 def create_adv(request):
@@ -105,6 +129,31 @@ class AdverListCreateAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AdverGoodDealsAPIView(APIView):
+    def get(self, request):
+        # Сложный Q-запрос для фильтрации выгодных предложений
+        good_deals_query = (Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5)
+        adverts = Adver.objects.filter(good_deals_query)
+
+        # Пагинация
+        page = request.GET.get('page', 1)
+        paginator = Paginator(adverts, 5)  # 5 объявлений на страницу
+        try:
+            adverts = paginator.page(page)
+        except:
+            return Response({"error": "Неверный номер страницы"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Сериализация данных
+        serializer = AdverSerializer(adverts, many=True)
+        return Response({
+            "page": page,
+            "total_pages": paginator.num_pages,
+            "total_count": paginator.count,
+            "adverts": serializer.data,
+        })
+
 
 # API для квартир
 class ApartmentListCreateAPIView(APIView):
@@ -174,3 +223,47 @@ class AdverViewSet(ModelViewSet):
             # Здесь вы можете добавить логику сохранения заметки
             return Response({"message": f"Заметка добавлена к объявлению {adver.id}: {note}"})
         return Response({"error": "Заметка не предоставлена"}, status=400)
+    
+     # Получение одного объекта
+    def retrieve(self, request, pk=None):
+        adver = get_object_or_404(Adver, pk=pk)
+        serializer = self.get_serializer(adver)
+        return Response(serializer.data)
+
+    # Удаление объекта
+    def destroy(self, request, pk=None):
+        adver = get_object_or_404(Adver, pk=pk)
+        adver.delete()
+        return Response({"message": "Объявление удалено"}, status=status.HTTP_204_NO_CONTENT)
+
+    # Создание объекта
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ApartmentViewSet(ModelViewSet):
+    queryset = Apartment.objects.all()
+    serializer_class = ApartmentSerializer
+
+    # Получение одного объекта
+    def retrieve(self, request, pk=None):
+        apartment = get_object_or_404(Apartment, pk=pk)
+        serializer = self.get_serializer(apartment)
+        return Response(serializer.data)
+
+    # Удаление объекта
+    def destroy(self, request, pk=None):
+        apartment = get_object_or_404(Apartment, pk=pk)
+        apartment.delete()
+        return Response({"message": "Квартира удалена"}, status=status.HTTP_204_NO_CONTENT)
+
+    # Создание объекта
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
