@@ -130,6 +130,15 @@ class ApartmentAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = ApartmentResource
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
     list_filter = ('district',)
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('address', 'district')
+        }),
+        ('Детали', {
+            'fields': ('area', 'room_quantity', 'floor_app', 'description')
+        }),
+    )
 
 
 class AdverAdmin(ExportMixin, SimpleHistoryAdmin, admin.ModelAdmin):
