@@ -19,10 +19,13 @@ class AdverFilter(FilterSet):
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     start_date = django_filters.DateFilter(field_name="date_created", lookup_expr="gte")
     end_date = django_filters.DateFilter(field_name="date_created", lookup_expr="lte")
+    mortgage = django_filters.BooleanFilter(field_name="mortgage")
+    min_score = django_filters.NumberFilter(field_name="score", lookup_expr="gte")
+    max_score = django_filters.NumberFilter(field_name="score", lookup_expr="lte")
 
     class Meta:
         model = Adver
-        fields = ["min_price", "max_price", "start_date", "end_date", "mortgage"]
+        fields = ["min_price", "max_price", "start_date", "end_date", "mortgage", "min_score", "max_score"]
 
 
 class ApartmentFilter(FilterSet):
@@ -40,13 +43,16 @@ class ApartmentFilter(FilterSet):
 class AdverViewSet(ModelViewSet):
     queryset = Adver.objects.all()
     serializer_class = AdverSerializer
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_class = AdverFilter
     search_fields = ["own", "apartment__address"]
 
     # Кастомный метод: возвращает объявления с ипотекой
     @action(methods=['GET'], detail=False, url_path='mortgage-available')
     def mortgage_available(self, request):
+        """
+        Квартиры с ипотекой
+        """
         adverts = Adver.objects.filter(mortgage=True)
         serializer = self.get_serializer(adverts, many=True)
         return Response(serializer.data)
@@ -54,10 +60,10 @@ class AdverViewSet(ModelViewSet):
     # Кастомный метод: добавляет заметку к объявлению
     @action(methods=['POST'], detail=True, url_path='add-note')
     def add_note(self, request, pk=None):
-        adver = self.get_object()  # Получение объекта объявления по pk
+        adver = self.get_object()
         note = request.data.get('note', '')
         if note:
-            # Здесь вы можете добавить логику сохранения заметки
+            # Логика сохранения заметки
             return Response({"message": f"Заметка добавлена к объявлению {adver.id}: {note}"})
         return Response({"error": "Заметка не предоставлена"}, status=400)
     
@@ -81,6 +87,19 @@ class AdverViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+    @action(methods=['GET'], detail=False, url_path='good-deals')
+    def good_deals(self, request):
+        """
+        Выгодные предложения:
+        - Цена ниже 2,000,000 или доступна ипотека
+        - Исключены объекты с рейтингом меньше 5
+        """
+        good_deals_query = (Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5)
+        adverts = self.queryset.filter(good_deals_query)
+
+        serializer = self.get_serializer(adverts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
         
     
 class ApartmentViewSet(ModelViewSet):
@@ -88,7 +107,7 @@ class ApartmentViewSet(ModelViewSet):
     serializer_class = ApartmentSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend]
     filterset_class = ApartmentFilter
-    search_fields = ["address", "description"]
+    search_fields = ["address", "description", "district__district_name"]
 
     # Получение одного объекта
     def retrieve(self, request, pk=None):
@@ -108,7 +127,41 @@ class ApartmentViewSet(ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # Метод для получения квартир с площадью не менее 60 кв.м.
+    @action(methods=['GET'], detail=False, url_path='area-60-plus')
+    def area_60_plus(self, request):
+        """
+        Фильтрация квартир:
+        - Площадь не менее 60 кв.м.
+        """
+        apartments = self.queryset.filter(area__gte=60)
+
+        if not apartments.exists():
+            return Response({"message": "Нет квартир с площадью не менее 60 кв.м."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(apartments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    @action(methods=['GET'], detail=False, url_path='max-appart')
+    def max_appart(self, request):
+        """
+        Фильтрация квартир:
+        - Этаж не ниже 2 или площадь не меньше 50 кв.м.
+        - Исключены квартиры с количеством комнат меньше 3.
+        """
+        max_appart_query = Q(floor_app__gte=2) | Q(area__gte=50)
+        exclude_query = Q(room_quantity__lt=3)
+        apartments = self.queryset.filter(max_appart_query).exclude(exclude_query)
+
+        if not apartments.exists():
+            return Response({"message": "Нет подходящих квартир"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(apartments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 def index_page(request): 
     # Получение выбранных фильтров из GET-запроса, по умолчанию "all"
@@ -226,31 +279,6 @@ class AdverListCreateAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-
-class AdverGoodDealsAPIView(APIView):
-    def get(self, request):
-        # Сложный Q-запрос для фильтрации выгодных предложений
-        good_deals_query = (Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5)
-        adverts = Adver.objects.filter(good_deals_query)
-
-        # Пагинация
-        page = request.GET.get('page', 1)
-        paginator = Paginator(adverts, 5)  # 5 объявлений на страницу
-        try:
-            adverts = paginator.page(page)
-        except:
-            return Response({"error": "Неверный номер страницы"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Сериализация данных
-        serializer = AdverSerializer(adverts, many=True)
-        return Response({
-            "page": page,
-            "total_pages": paginator.num_pages,
-            "total_count": paginator.count,
-            "adverts": serializer.data,
-        })
-
 
 # API для квартир
 class ApartmentListCreateAPIView(APIView):
