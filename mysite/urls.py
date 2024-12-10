@@ -18,9 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 from Dynasty_8.views import (
     index_page, create_adv, create_app,
-    ApartmentListCreateAPIView, DistrictListCreateAPIView,
-    ProfileListCreateAPIView, AdverSearchAPIView, AdverViewSet,
-    AdverGoodDealsAPIView, ApartmentViewSet
+    DistrictListCreateAPIView, ProfileListCreateAPIView,
+    AdverSearchAPIView, AdverViewSet, ApartmentViewSet
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -38,11 +37,9 @@ urlpatterns = [
     path('new_app/', create_app, name='create_app'),
 
     # API маршруты
-    path('api/apartments/', ApartmentListCreateAPIView.as_view(), name='api_apartments'),
     path('api/districts/', DistrictListCreateAPIView.as_view(), name='api_districts'),
     path('api/profiles/', ProfileListCreateAPIView.as_view(), name='api_profiles'),
     path('api/adverts/search/', AdverSearchAPIView.as_view(), name='adver_search'),
-    path('api/adverts/good-deals/', AdverGoodDealsAPIView.as_view(), name='adverts_good_deals'),
     path('api/', include(router.urls)),
 
     # Добавление маршрутов из DefaultRouter с префиксом "api/"
