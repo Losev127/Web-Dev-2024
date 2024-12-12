@@ -113,23 +113,27 @@ class Apart_imageInline(admin.TabularInline):
 
 class AdverInline(admin.TabularInline):
     model = Adver
-    fields = ('own', 'price', 'date_created', 'mortgage', 'score', 'adver_link')
-    readonly_fields = ('adver_link',)
+    fields = ('own', 'price', 'date_created', 'mortgage', 'score', 'apartment_link')
+    readonly_fields = ('apartment_link',)
     extra = 0
 
-    def adver_link(self, obj):
-        if obj.id:
-            url = reverse("admin:Dynasty_8_adver_change", args=[obj.id])
-            return format_html('<a href="{}">Перейти к объявлению</a>', url)
-        return "Нет объявления"
+    def apartment_link(self, obj):
+        """
+        Форма редактирования связанной квартиры
+        """
+        if obj.apartment:
+            url = reverse("admin:Dynasty_8_apartment_change", args=[obj.apartment.id])
+            return format_html('<a href="{}">Редактировать квартиру</a>', url)
+        return "Квартира не указана"
 
-    adver_link.short_description = "Ссылка на объявление"
+    apartment_link.short_description = "Редактировать квартиру"
 
 
 class ApartmentAdmin(ExportMixin, admin.ModelAdmin):
     resource_class = ApartmentResource
     list_display = ('address', 'district', 'area', 'room_quantity', 'floor_app')
     list_filter = ('district',)
+    inlines = [Apart_imageInline]
     
     fieldsets = (
         ('Основная информация', {
