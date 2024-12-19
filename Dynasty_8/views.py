@@ -13,6 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
 class AdverFilter(FilterSet):
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
@@ -85,7 +86,7 @@ class AdverViewSet(ModelViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
     @action(methods=['GET'], detail=False, url_path='good-deals')
     def good_deals(self, request):
@@ -327,3 +328,12 @@ class AdverSearchAPIView(ListAPIView):
     serializer_class = AdverSerializer
     filter_backends = [SearchFilter]
     search_fields = ['own', 'apartment__address', 'apartment__description']
+
+@extend_schema(
+    summary="Получить список объявлений",
+    description="Эндпоинт возвращает список всех объявлений.",
+    responses={200: AdverSerializer},
+)
+class AdverViewSet(ModelViewSet):
+    queryset = Adver.objects.all()
+    serializer_class = AdverSerializer
