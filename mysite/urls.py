@@ -24,6 +24,7 @@ from Dynasty_8.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 # Роутер для ViewSet
 router = DefaultRouter()
@@ -44,6 +45,15 @@ urlpatterns = [
 
     # Добавление маршрутов из DefaultRouter с префиксом "api/"
     path('api/', include(router.urls)),
+
+     # Схема API
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    
+    # Swagger UI
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
+    # Redoc (альтернативная документация)
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 if settings.DEBUG:
