@@ -1,8 +1,23 @@
+from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 from simple_history.models import HistoricalRecords
+
+class SocialApp(models.Model):
+    sites = models.ManyToManyField(
+        Site,
+        related_name='dynasty8_socialapps',  # Уникальное имя для обратной связи
+        verbose_name="Сайты"
+    )
+    name = models.CharField(max_length=255, verbose_name="Название")
+    client_id = models.CharField(max_length=255, verbose_name="ID клиента")
+    secret = models.CharField(max_length=255, verbose_name="Секретный ключ")
+    provider = models.CharField(max_length=30, verbose_name="Провайдер")
+
+    def __str__(self):
+        return self.name
 
 class Profile(models.Model):
     id = models.AutoField(primary_key=True)
