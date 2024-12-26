@@ -1,5 +1,5 @@
 from django.contrib import admin
-from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City, Image, Apart_image
+from Dynasty_8.models import Profile, Rolename, Adver, Apartment, District, City, Image, Apart_image, SocialApp
 from simple_history.admin import SimpleHistoryAdmin
 from import_export.admin import ExportMixin
 from import_export import resources
@@ -7,7 +7,11 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.http import HttpResponse
 
-
+@admin.register(SocialApp)
+class SocialAppAdmin(admin.ModelAdmin):
+    list_display = ('name', 'provider')
+    list_filter = ('provider',)
+    
 class AdverResource(resources.ModelResource):
     class Meta:
         model = Adver
