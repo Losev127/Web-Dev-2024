@@ -14,6 +14,14 @@ from django.shortcuts import get_object_or_404
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.shortcuts import render, get_list_or_404
+from django.core.cache import cache
+from django.http import JsonResponse
+from .utils import get_adverts_by_apartment
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
 
 class AdverFilter(FilterSet):
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
@@ -337,3 +345,54 @@ class AdverSearchAPIView(ListAPIView):
 class AdverViewSet(ModelViewSet):
     queryset = Adver.objects.all()
     serializer_class = AdverSerializer
+
+def test_email_view(request):
+    send_mail(
+        "Тестовое письмо от Django",
+        "Это тестовое письмо, отправленное через MailHog.",
+        "test@example.com",
+        ["recipient@example.com"],
+    )
+    return HttpResponse("Тестовое письмо отправлено!")
+
+def get_adverts_by_apartment(apartment_id):
+    """
+    Получает объявления по квартире. Сначала проверяет кэш, затем базу данных.
+    """
+    # Формируем ключ для кэша
+    cache_key = f"adverts_apartment_{apartment_id}"
+    
+    # Проверяем наличие данных в кэше
+    adverts = cache.get(cache_key)
+    if adverts is None:
+        # Если данных нет в кэше, извлекаем из базы
+        adverts = list(Adver.objects.filter(apartment_id=apartment_id))
+        
+        # Сохраняем в кэш на 15 минут
+        cache.set(cache_key, adverts, timeout=60 * 15)
+    return adverts
+
+def adverts_view(request, apartment_id):
+    """
+    Отображает список объявлений по конкретной квартире.
+    """
+    adverts = get_adverts_by_apartment(apartment_id)
+    data = [
+        {
+            "id": adver.id,
+            "price": adver.price,
+            "date_created": adver.date_created.strftime("%Y-%m-%d"),
+            "own": adver.own,
+            "mortgage": adver.mortgage,
+            "score": adver.score,
+            "apartment": adver.apartment.id,
+        }
+        for adver in adverts
+    ]
+    return JsonResponse(data, safe=False)
+
+class AdverCreateView(CreateView):
+    model = Adver
+    fields = ['price', 'own', 'date_created', 'apartment', 'score', 'image', 'mortgage']
+    template_name = 'create_adv.html'
+    success_url = reverse_lazy('index_page')
