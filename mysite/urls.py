@@ -25,6 +25,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from Dynasty_8.views import AdverCreateView
+from Dynasty_8.views import test_email_view
 
 # Роутер для ViewSet
 router = DefaultRouter()
@@ -54,6 +56,13 @@ urlpatterns = [
     
     # Redoc (альтернативная документация)
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
+    path('send-test-email/', test_email_view),
+
+    path('class-create-adv/', AdverCreateView.as_view(), name='class_create_adv'),
+
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:
