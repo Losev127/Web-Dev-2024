@@ -1,0 +1,13 @@
+Django==4.2
+djangorestframework==3.14.0
+redis==5.0.0
+django-celery-results==2.5.1
+django-allauth==0.52.0
+flake8
+pylint
+drf-spectacular
+psycopg2
+docker-compose build
+docker-compose up
+
+
