@@ -1,114 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание объявления</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-        }
-        header {
-            background-color: #343a40;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        header h1 {
-            margin: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 30px auto;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #343a40;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        input, select, textarea {
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        input[type="submit"] {
-            background-color: #343a40;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 12px;
-            border-radius: 4px;
-        }
-        input[type="submit"]:hover {
-            background-color: #007bff;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Редактировать объявление{% endblock %}
+
+{% block content %}
     <header>
         <h1>Создание объявления</h1>
     </header>
     <div class="container">
         <h2>Добавьте новое объявление</h2>
-        <form method="POST" action="">
-            <label for="title">Заголовок:</label>
-            <input type="text" id="title" name="title" placeholder="Введите заголовок объявления" required>
-
+        <form method="POST" action="" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <ul>
+            <!-- Цена -->
             <label for="price">Цена (₽):</label>
             <input type="number" id="price" name="price" placeholder="Введите цену" required>
-
+            </ul>
+            <ul>
+            <!-- Владелец -->
             <label for="own">Ваше имя:</label>
             <input type="text" id="own" name="own" placeholder="Введите имя" required>
-
+            </ul>
+            <ul>
+            <!-- Возможность ипотеки -->
             <label for="mortgage">Ипотека:</label>
             <select id="mortgage" name="mortgage">
-                <option value="true">Есть</option>
-                <option value="false">Нет</option>
+                <option value="True">Есть</option>
+                <option value="False">Нет</option>
             </select>
-
-            <label for="description">Описание:</label>
-            <textarea id="description" name="description" rows="5" placeholder="Введите описание" required></textarea>
-
+            </ul>
+            <ul>
+            <!-- Рейтинг -->
+            <label for="score">Рейтинг квартиры от риелтора:</label>
+            <input type="number" id="score" name="score" placeholder="Введите рейтинг" required>
+            </ul>
+            <ul>
+            <!-- Квартира -->
+            <label for="apartment">Квартира:</label>
+            <select id="apartment" name="apartment">
+                {% for apartment in apartments %}
+                    <option value="{{ apartment.id }}">{{ apartment.address }} - {{ apartment.area }} кв.м., {{ apartment.room_quantity }} комн.</option>
+                {% endfor %}
+            </select>
+            </ul>
+            <ul>
+            <!-- Изображение (пока без загрузки файлов) -->
             <label for="image">Изображение:</label>
-            <input type="file" id="image" name="image" accept="image/*">
-
-            <h2>Внесите характеристики квартиры</h2>
-            <label for="floor_app">Этаж:</label>
-            <input type="number" id="floor_app" name="floor_app" placeholder="Введите этаж" required>
-
-            <label for="district">Район:</label>
-            <input type="text" id="district" name="district" placeholder="Введите название района" required>
-
-            <label for="area">Площадь кв.м.:</label>
-            <input type="number" id="area" name="area" placeholder="Введите площадь " required>
-
-            <label for="room_quantity">Количество комнат:</label>
-            <input type="number" id="room_quantity" name="room_quantity" placeholder="Введите количество комнат" required>
-
-            <label for="address">Адрес:</label>
-            <input type="text" id="address" name="address" placeholder="Введите адрес квартиры" required>
-
-            <input type="submit" value="Создать объявление">
+            <input type="file" id="image" name="image" required>
+            </ul>
+            <ul>
+            <input type="submit" value="Создать объявление" class="send_btn">
+            </ul>
         </form>
     </div>
-</body>
-</html>
+    <a href="{% url 'index_page' %}" class="btn_back">Вернуться на главную</a>
+    {% endblock %}
