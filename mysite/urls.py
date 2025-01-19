@@ -19,14 +19,14 @@ from django.urls import path, include
 from Dynasty_8.views import (
     index_page, create_adv, create_app,
     DistrictListCreateAPIView, ProfileListCreateAPIView,
-    AdverSearchAPIView, AdverViewSet, ApartmentViewSet
+    AdverSearchAPIView, AdverViewSet, ApartmentViewSet, list_admins
 )
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from Dynasty_8.views import AdverCreateView
-from Dynasty_8.views import test_email_view
+from Dynasty_8.views import AdverCreateView, ApartmentDetailView, delete_adver, test_email_view, update_adver,  apartment_detail, set_session_data, apartment_list
+from Dynasty_8 import views
 
 # Роутер для ViewSet
 router = DefaultRouter()
@@ -35,6 +35,7 @@ router.register(r'apartments', ApartmentViewSet, basename='apartments')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('__debug__/', include('debug_toolbar.urls')),
     path('', index_page, name='index_page'),
     path('create/', create_adv, name='create_adv'),
     path('new_app/', create_app, name='create_app'),
@@ -61,9 +62,17 @@ urlpatterns = [
 
     path('class-create-adv/', AdverCreateView.as_view(), name='class_create_adv'),
 
-    path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-]
+    path('admins/', list_admins, name='list_admins'),
+    # path('apartments/<int:pk>/', ApartmentDetailView.as_view(), name='apartment_detail'),
+    path('delete-adver/<int:pk>/', delete_adver, name='delete_adver'),
+    path('update-adver/<int:pk>/', update_adver, name='update_adver'),
+    path('apartments/<int:pk>/', apartment_detail, name='apartment_detail'),
+    path('set-session/', set_session_data, name='set_session_data'),
+    path('apartments/', apartment_list, name='apartment_list'),
+    path('districts/', views.district_list, name='district_list'),
+    path('search/', views.search_results, name='search_results'),
+] 
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
