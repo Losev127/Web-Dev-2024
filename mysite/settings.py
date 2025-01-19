@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +64,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -133,6 +136,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
@@ -196,3 +200,12 @@ LOGOUT_REDIRECT_URL = '/create/'  # Куда перенаправлять пос
 # Отключение обязательного подтверждения email
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_EMAIL_REQUIRED = True
+
+TIME_ZONE = 'Europe/Moscow'
+USE_TZ = True
+
+INTERNAL_IPS = [
+    '127.0.0.1',  # Для локальной разработки
+]
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
