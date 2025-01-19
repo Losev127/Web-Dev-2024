@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Список квартир{% endblock %}
+
+{% block content %}
+    <h1>Список квартир</h1>
+
+    <!-- Форма фильтров -->
+    <form method="get" action="{% url 'apartment_list' %}">
+        {{ form.as_p }}
+        <button type="submit" class="send_btn">Применить фильтры</button>
+    </form>
+
+    <!-- Статистика -->
+    <p><strong>Всего квартир:</strong> {{ total_apartments }}</p>
+    {% if large_apartments_exist %}
+        <p>Есть квартиры с площадью более 150 кв.м.</p>
+    {% else %}
+        <p>Квартир с площадью более 150 кв.м. нет.</p>
+    {% endif %}
+
+    <!-- Список квартир -->
+    <div class="grid">
+        {% for apartment in apartments %}
+        <div class="card">
+            <div class="card-body">
+                <h5>{{ apartment.address }}</h5>
+                <p><strong>Район:</strong> {{ apartment.district.district_name }}</p>
+                <p><strong>Площадь:</strong> {{ apartment.area }} кв.м.</p>
+                <p><strong>Количество комнат:</strong> {{ apartment.room_quantity }}</p>
+                <p><strong>Этаж:</strong> {{ apartment.floor_app }}</p>
+                <p><strong>Описание:</strong> {{ apartment.description }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p>Квартиры не найдены.</p>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'index_page' %}" class="btn_back">Вернуться на главную</a>
+{% endblock %}

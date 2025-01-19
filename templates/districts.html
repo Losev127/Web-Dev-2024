@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <h1 class="title">Список всех районов</h1>
+    <div class="grid">
+        {% for district in districts %}
+        <div class="card">
+            <div class="card-image">
+                {% if district.photo %}
+                <img src="{{ district.photo.url }}" alt="Фотография района">
+                {% else %}
+                <img src="{% static 'images/district_placeholder.jpg' %}" alt="Фотография отсутствует">
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h3>{{ district.district_name }}</h3>
+                <p><strong>Город:</strong> {{ district.city_name }}</p>
+                <p><strong>Рейтинг инфраструктуры:</strong> {{ district.infrastructure_rating }}</p>
+                <p><strong>Экология:</strong> {{ district.ecology_rating }}</p>
+                <p><strong>Отдаленность от центра:</strong> {{ district.distance_from_center }} км</p>
+                <p><strong>Станции метро:</strong> {{ district.metro_stations }}</p>
+                <p><strong>Население:</strong> {{ district.population }}</p>
+                <p><strong>Годы застройки:</strong> {{ district.construction_years }}</p>
+            </div>
+        </div>
+        {% empty %}
+        <p>Районы не найдены.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

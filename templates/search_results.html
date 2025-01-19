@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Результаты поиска</h1>
+
+    {% if search_query %}
+        <p>Результаты для: <strong>{{ search_query }}</strong></p>
+    {% else %}
+        <p>Введите текст для поиска.</p>
+    {% endif %}
+
+    <h2>Объявления</h2>
+    {% if adverts %}
+        <div class="grid">
+            {% for adver in adverts %}
+                <div class="card">
+                    {% if adver.image %}
+                        <img src="{{ adver.image.url }}" alt="Изображение квартиры">
+                    {% else %}
+                        <img src="/static/images/placeholder.jpg" alt="Изображение отсутствует">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5>{{ adver.apartment.address }} - {{ adver.apartment.area }} м²</h5>
+                        <p>Цена: ₽{{ adver.price }}</p>
+                        <p>Владелец: {{ adver.own }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ adver.apartment.get_absolute_url }}" class="btn_detail">Подробнее</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Объявления не найдены.</p>
+    {% endif %}
+
+    <h2>Районы</h2>
+    {% if districts %}
+        <div class="grid">
+            {% for district in districts %}
+                <div class="card">
+                    {% if district.photo %}
+                        <img src="{{ district.photo.url }}" alt="Фотография района">
+                    {% else %}
+                        <img src="/static/images/district_placeholder.jpg" alt="Фотография отсутствует">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5>{{ district.district_name }} ({{ district.city_name }})</h5>
+                        <p>Рейтинг инфраструктуры: {{ district.infrastructure_rating }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Районы не найдены.</p>
+    {% endif %}
+
+    <h2>Пользователи</h2>
+    {% if profiles %}
+        <div class="grid">
+            {% for profile in profiles %}
+                <div class="card">
+                    {% if profile.photo %}
+                        <img src="{{ profile.photo.url }}" alt="Фотография профиля">
+                    {% else %}
+                        <img src="/static/images/profile_placeholder.jpg" alt="Фотография отсутствует">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5>{{ profile.get_roleName_display }}</h5>
+                        <p>Email: {{ profile.eEmail }}</p>
+                        <p>Телефон: {{ profile.phoneNumber }}</p>
+                    </div>
+                    <div class="card-footer">
+                        {% if profile.contact_link %}
+                            <a href="{{ profile.contact_link }}" class="btn_detail" target="_blank">Связаться</a>
+                        {% else %}
+                            <p>Контакт отсутствует</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Пользователи не найдены.</p>
+    {% endif %}
+</div>
+{% endblock %}

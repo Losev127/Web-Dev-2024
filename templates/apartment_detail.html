@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Детали квартиры{% endblock %}
+
+{% block content %}
+<header>
+    <h1>Детали квартиры</h1>
+</header>
+<div class="container">
+    <p><strong>Адрес:</strong> {{ apartment.address }}</p>
+    <p><strong>Район:</strong> {{ apartment.district.district_name }}</p>
+    <p><strong>Площадь:</strong> {{ apartment.area }} кв.м.</p>
+    <p><strong>Количество комнат:</strong> {{ apartment.room_quantity }}</p>
+    <p><strong>Этаж:</strong> {{ apartment.floor_app }}</p>
+    <p><strong>Описание:</strong> {{ apartment.description }}</p>
+
+    <h2>Отзывы</h2>
+    {% if reviews %}
+        <ul>
+            {% for review in reviews %}
+                <li>
+                    <strong>{{ review.author }}</strong> ({{ review.created_at|date:"d M Y" }})
+                    <p>{{ review.text }}</p>
+                    <p>Рейтинг: {{ review.rating }}/5</p>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Отзывов пока нет. Будьте первым!</p>
+    {% endif %}
+
+    <h3>Добавить отзыв</h3>
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Поле "Автор" -->
+        <div>
+            {{ form.author.label_tag }}
+            {{ form.author }}
+            {% if form.author.errors %}
+                <div class="error-messages">
+                    <ul>
+                        {% for error in form.author.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Поле "Отзыв" -->
+        <div>
+            {{ form.text.label_tag }}
+            {{ form.text }}
+            {% if form.text.errors %}
+                <div class="error-messages">
+                    <ul>
+                        {% for error in form.text.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Поле "Рейтинг" -->
+        <div>
+            {{ form.rating.label_tag }}
+            {{ form.rating }}
+            {% if form.rating.errors %}
+                <div class="error-messages">
+                    <ul>
+                        {% for error in form.rating.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="send_btn">Отправить</button>
+    </form>
+
+    <!-- Общий вывод ошибок формы -->
+    {% if form.errors %}
+        <div class="error-messages">
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    <a href="{% url 'index_page' %}" class="btn_back">Вернуться на главную</a>
+</div>
+{% endblock %}
