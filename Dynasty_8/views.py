@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_list_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Adver, Apartment, District, Profile
+from .models import Adver, Apartment, District, Profile, Review
 from .serializers import AdverSerializer, ApartmentSerializer, DistrictSerializer, ProfileSerializer
 from django.db.models import Q
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter
 from rest_framework.decorators import action
@@ -14,14 +14,146 @@ from django.shortcuts import get_object_or_404
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.mail import send_mail
-from django.shortcuts import render, get_list_or_404
 from django.core.cache import cache
 from django.http import JsonResponse
 from .utils import get_adverts_by_apartment
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
+from django.views.generic import DetailView
+from django.db.models import Avg, Min, Max, Count
+from django.contrib import messages
+from .forms import AdverForm, ReviewForm, ApartmentFilterForm
+from django.utils.timezone import now
+from django.urls import reverse
+
+
+def district_list(request):
+    districts = District.objects.all()
+    return render(request, 'districts.html', {'districts': districts})
+
+def apartment_list(request):
+    queryset = Apartment.objects.all()  # Изначально получаем все объекты
+    form = ApartmentFilterForm(request.GET)
+
+    if form.is_valid():
+        district = form.cleaned_data.get('district')
+        min_area = form.cleaned_data.get('min_area')
+        max_area = form.cleaned_data.get('max_area')
+        rooms = form.cleaned_data.get('rooms')
+        min_floor = form.cleaned_data.get('min_floor')
+        max_floor = form.cleaned_data.get('max_floor')
+        address = form.cleaned_data.get('address')
+        description = form.cleaned_data.get('description')
+
+        # Применение фильтров
+        if district:
+            queryset = queryset.filter(district=district)
+        if min_area is not None:
+            queryset = queryset.filter(area__gte=min_area)
+        if max_area is not None:
+            queryset = queryset.filter(area__lte=max_area)
+        if rooms:
+            queryset = queryset.filter(room_quantity=rooms)
+        if min_floor is not None:
+            queryset = queryset.filter(floor_app__gte=min_floor)
+        if max_floor is not None:
+            queryset = queryset.filter(floor_app__lte=max_floor)
+        if address:
+            queryset = queryset.filter(address__icontains=address)
+        if description:
+            queryset = queryset.filter(description__contains=description)
+
+    total_apartments = queryset.count()
+    large_apartments_exist = queryset.filter(area__gt=150).exists()
+
+    return render(request, 'apartment_list.html', {
+        'form': form,
+        'apartments': queryset,
+        'total_apartments': total_apartments,
+        'large_apartments_exist': large_apartments_exist
+    })
+
+
+def set_session_data(request):
+    request.session['user_id'] = 42
+    request.session['cart'] = {'item1': 3, 'item2': 5}  # Добавляем данные в сеанс
+    return HttpResponse("Данные добавлены в сеанс")
+
+def get_session_data(request):
+    user_id = request.session.get('user_id', 'Не задано')
+    cart = request.session.get('cart', {})
+    return HttpResponse(f"ID пользователя: {user_id}, Корзина: {cart}")
+
+def apartment_detail(request, pk):  
+    apartment = get_object_or_404(Apartment, pk=pk)
+    reviews = apartment.reviews.all()  # Получение всех отзывов для квартиры
+
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            # Использование form.cleaned_data для получения данных формы
+            author = form.cleaned_data['author']
+            text = form.cleaned_data['text']
+            rating = form.cleaned_data['rating']
+
+            # Создание объекта Review с использованием данных из cleaned_data
+            review = Review(apartment=apartment, author=author, text=text, rating=rating)
+            review.save()  # Сохранение отзыва в базу данных
+
+            messages.success(request, "Ваш отзыв успешно добавлен.")
+            # Использование HttpResponseRedirect для перенаправления
+            return HttpResponseRedirect(reverse('apartment_detail', args=[pk]))
+    else:
+        form = ReviewForm()  # Создание новой формы, если метод GET или форма невалидна
+
+    # Передача формы и отзывов в шаблон
+    return render(request, 'apartment_detail.html', {
+        'apartment': apartment,
+        'reviews': reviews,
+        'form': form
+    })
+
+def create_adver(request): 
+    if request.method == "POST":
+        form = AdverForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()  # Вызов переопределенного save с commit=True
+            return redirect('index_page')
+    else:
+        form = AdverForm()
+    
+    return render(request, 'create_adver.html', {'form': form})
+
+def update_adver(request, pk):
+    """Редактирует объявление с указанным pk."""
+    adver = get_object_or_404(Adver, pk=pk)
+    
+    if request.method == 'POST':
+        form = AdverForm(request.POST, request.FILES, instance=adver)
+        if form.is_valid():
+            form.save()
+            return redirect('index_page')
+    else:
+        form = AdverForm(instance=adver)
+
+    return render(request, 'update_adver.html', {'form': form})
+
+def delete_adver(request, pk):
+    adver = get_object_or_404(Adver, pk=pk)
+    adver.delete()
+    messages.success(request, "Объявление успешно удалено.")
+    return redirect('index_page')
+
+class ApartmentDetailView(DetailView):
+    model = Apartment
+    template_name = 'apartment_detail.html'
+
+def list_admins(request):
+    admins = Profile.objects.admins()
+    data = {"admins": list(admins.values("eEmail", "phoneNumber", "roleName"))}
+    return JsonResponse(data)
 
 class AdverFilter(FilterSet):
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
@@ -35,7 +167,6 @@ class AdverFilter(FilterSet):
     class Meta:
         model = Adver
         fields = ["min_price", "max_price", "start_date", "end_date", "mortgage", "min_score", "max_score"]
-
 
 class ApartmentFilter(FilterSet):
     min_area = django_filters.NumberFilter(field_name="area", lookup_expr="gte")
@@ -51,9 +182,9 @@ class ApartmentFilter(FilterSet):
 
 class AdverViewSet(ModelViewSet):
     queryset = Adver.objects.all()
-    serializer_class = AdverSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_class = AdverFilter
+    # serializer_class = AdverSerializer
+    # filter_backends = [DjangoFilterBackend, SearchFilter]
+    # filterset_class = AdverFilter
     search_fields = ["own", "apartment__address"]
 
     # Кастомный метод: возвращает объявления с ипотекой
@@ -75,7 +206,7 @@ class AdverViewSet(ModelViewSet):
             # Логика сохранения заметки
             return Response({"message": f"Заметка добавлена к объявлению {adver.id}: {note}"})
         return Response({"error": "Заметка не предоставлена"}, status=400)
-    
+     
      # Получение одного объекта
     def retrieve(self, request, pk=None):
         adver = get_object_or_404(Adver, pk=pk)
@@ -95,7 +226,7 @@ class AdverViewSet(ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
     @action(methods=['GET'], detail=False, url_path='good-deals')
     def good_deals(self, request):
         """
@@ -109,8 +240,6 @@ class AdverViewSet(ModelViewSet):
         serializer = self.get_serializer(adverts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-        
-    
 class ApartmentViewSet(ModelViewSet):
     queryset = Apartment.objects.all()
     serializer_class = ApartmentSerializer
@@ -169,8 +298,36 @@ class ApartmentViewSet(ModelViewSet):
 
         serializer = self.get_serializer(apartments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+def search_results(request):
+    search_query = request.GET.get('search_query', '')
 
+    # Поиск по объявлениям
+    adverts = Adver.objects.filter(
+        Q(apartment__address__icontains=search_query) |
+        Q(own__icontains=search_query)
+    )
 
+    # Поиск по районам
+    districts = District.objects.filter(
+        Q(district_name__icontains=search_query) |
+        Q(city_name__icontains=search_query)
+    )
+
+    # Поиск по профилям
+    profiles = Profile.objects.filter(
+        Q(eEmail__icontains=search_query) |
+        Q(phoneNumber__icontains=search_query)
+    )
+
+    return render(request, 'search_results.html', {
+        'search_query': search_query,
+        'adverts': adverts,
+        'districts': districts,
+        'profiles': profiles,
+    })
+
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 def index_page(request): 
     # Получение выбранных фильтров из GET-запроса, по умолчанию "all"
@@ -194,33 +351,68 @@ def index_page(request):
     elif mortgage == 'False':
         filter_conditions &= Q(mortgage=False)
 
-    # Фильтрация по типу
-    if filter_type == 'below_2000000':
-        filter_conditions &= Q(price__lt=2000000)
-    elif filter_type == 'mortgage':
-        filter_conditions &= Q(mortgage=True)
-
-    # Фильтр: "Выгодные предложения"
-    elif filter_type == 'good_deals':
-        filter_conditions &= (Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5)
-
-    # Получаем объявления с применёнными фильтрами
+    # Объявления по умолчанию
     adverts = Adver.objects.filter(filter_conditions)
 
-    # Пагинация: 5 объявлений на страницу
-    paginator = Paginator(adverts, 5)
-    page_number = request.GET.get('page')  # Получение текущей страницы
-    page_obj = paginator.get_page(page_number)  # Получение объектов для текущей страницы
+    # Фильтрация по типу
+    if filter_type == 'below_2000000':
+        adverts = adverts.filter(price__lt=2000000)
+    elif filter_type == 'mortgage':
+        adverts = adverts.filter(mortgage=True)
+    elif filter_type == 'good_deals':
+        adverts = adverts.filter((Q(price__lt=2000000) | Q(mortgage=True)) & ~Q(score__lt=5))
+    elif filter_type == 'high_rating':
+        adverts = adverts.exclude(score__lt=5)  # Исключаем объявления с низким рейтингом
+    elif filter_type == 'order_price':
+        adverts = adverts.order_by('price')  # Сортируем по цене
+
+    # Агрегирование данных
+    stats = adverts.aggregate(
+        avg_price=Avg('price'),
+        min_price=Min('price'),
+        max_price=Max('price'),
+        total_count=Count('id')
+    )
+
+    # Пагинация: 6 объявлений на страницу
+    paginator = Paginator(adverts, 6)
+    page_number = request.GET.get('page')
+
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+
+    # Получаем все районы с сортировкой по удаленности от центра
+    all_districts = District.objects.order_by('distance_from_center')
+
+    # Пагинация: 3 района на страницу
+    district_paginator = Paginator(all_districts, 3)
+    district_page_number = request.GET.get('district_page')
+
+    try:
+        district_page_obj = district_paginator.get_page(district_page_number)
+    except PageNotAnInteger:
+        district_page_obj = district_paginator.get_page(1)
+    except EmptyPage:
+        district_page_obj = district_paginator.get_page(district_paginator.num_pages)
+
+    # Фильтрация профилей только для администраторов и модераторов
+    profiles = Profile.objects.filter(roleName__in=['admin', 'moderator'])
 
     # Передача данных в шаблон
     return render(request, 'index.html', {
         'page_obj': page_obj,
-        'current_filter': filter_type,  # Для отображения текущего фильтра
-        'price_min': price_min,  # Для сохранения значения фильтра в форме
+        'current_filter': filter_type,
+        'price_min': price_min,
         'price_max': price_max,
-        'mortgage': mortgage
+        'mortgage': mortgage,
+        'stats': stats,
+        'districts': district_page_obj,
+        'profiles': profiles
     })
-
 
 def create_adv(request):
     return render(request, 'create_adv.html')
