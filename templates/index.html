@@ -1,110 +1,101 @@
 <!DOCTYPE html>
+{% load custom_filters %}
+{% load custom_tags %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynasty 8</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            background-color: #f8f9fa;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        nav {
-            background-color: #f8f9fa;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #ddd;
-        }
-        nav a {
-            text-decoration: none;
-            color: #000;
-            margin: 0 10px;
-            font-weight: bold;
-        }
-        nav a:hover {
-            color: #007bff;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            flex: 1;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            justify-content: center;
-        }
-        .card {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        .card-body {
-            padding: 15px;
-            text-align: center;
-        }
-        .card h5 {
-            margin: 10px 0;
-            font-size: 1.2rem;
-        }
-        .card p {
-            margin: 5px 0;
-            color: #555;
-        }
-        .card-footer {
-            background: #f8f9fa;
-            padding: 10px;
-            text-align: center;
-        }
-        .card-footer a {
-            text-decoration: none;
-            color: white;
-            background-color: #343a40;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-        .card-footer a:hover {
-            background-color: #007bff;
-        }
-        .footer {
-            background-color: #343a40;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-    </style>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Advent+Pro:ital,wght@0,100..900;1,100..900&family=Alumni+Sans:ital,wght@0,100..900;1,100..900&family=Bebas+Neue&family=Jost:ital,wght@0,100..900;1,100..900&family=Jura:wght@300..700&family=PT+Sans+Narrow:wght@400;700&family=Poiret+One&family=Sofia+Sans+Extra+Condensed:ital,wght@0,1..1000;1,1..1000&display=swap" rel="stylesheet">
 </head>
+{% load socialaccount custom_filters custom_tags %} <!-- Загрузка всех необходимых библиотек -->
 <body>
     <nav>
-        <a href="#">Dynasty 8</a>
-        <div>
+        <div class="logo">
+            <img src="{% static 'images/logo.webp' %}" alt="Dynasty 8">
+        </div>
+        <a href="{% url 'index_page' %}">Dynasty 8</a>
+        <div class="menu">
             <a href="{% url 'index_page' %}">Главная</a>
             <a href="{% url 'create_adv' %}">Разместить объявление</a>
             <a href="{% url 'create_app' %}">Добавить квартиру</a>     
+            <a href="{% url 'apartment_list' %}">Все квартиры</a>    
+            <a href="{% url 'district_list' %}">Все районы</a>
         </div>
+        <form method="get" action="{% url 'search_results' %}" class="search-form">
+            <input type="text" name="search_query" placeholder="Искать объявления, районы и пользователей..." value="{{ request.GET.search_query }}">
+            <button type="submit">Найти</button>
+        </form>
     </nav>
-
-    <div class="container">
-        <!-- Форма для фильтров -->
-        <form method="get" action="{% url 'index_page' %}">
+       <div class="container">
+        <h2 class="title">Статистика объявлений</h2>
+        <div class="stats">
+            <ul>
+                <li><strong>Средняя цена:</strong> {{ stats.avg_price|floatformat:2 }} ₽</li>
+                <li><strong>Минимальная цена:</strong> {{ stats.min_price }} ₽</li>
+                <li><strong>Максимальная цена:</strong> {{ stats.max_price }} ₽</li>
+                <li><strong>Общее количество объявлений:</strong> {{ stats.total_count }}</li>
+            </ul>
+        </div>
+        
+        <h2 class="title">Наши администраторы</h2>
+        <div class="profile_grid">
+            {% for profile in profiles %}
+                <div class="profile_card">
+                    {% if profile.photo %}
+                        <img src="{{ profile.photo.url }}" alt="Фотография профиля">
+                    {% else %}
+                        <img src="/static/images/profile_placeholder.jpg" alt="Фотография отсутствует">
+                    {% endif %}
+                    <div class="profile_card-body">
+                        <h5>{{ profile.get_roleName_display }}</h5>
+                        <p>Email: {{ profile.eEmail }}</p>
+                        <p>Телефон: {{ profile.phoneNumber }}</p>
+                    </div>
+                    <div class="profile_card-footer">
+                        {% if profile.contact_link %}
+                            <a href="{{ profile.contact_link }}" class="btn_detail" target="_blank">Связаться</a>
+                        {% else %}
+                            <p>Контакт отсутствует</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p>Профили не найдены.</p>
+            {% endfor %}
+        </div>
+             <!-- Список районов -->
+        <h2 class="title">Лучшие районы</h2>
+        <div class="grid">
+            {% for district in districts %}
+                <div class="card">
+                    {% if district.photo %}
+                        <img src="{{ district.photo.url }}" alt="Фотография района">
+                    {% else %}
+                        <img src="/static/images/district_placeholder.jpg" alt="Фотография отсутствует">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5>{{ district.district_name }} ({{ district.city_name }})</h5>
+                        <p>Рейтинг инфраструктуры: {{ district.infrastructure_rating }}</p>
+                        <p>Отдаленность от центра: {{ district.distance_from_center }} км</p>
+                        <p>Станции метро: {{ district.metro_stations }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'district_list' %}" class="btn_detail">Подробнее</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p>Районы не найдены.</p>
+            {% endfor %}
+        </div>
+        <h2 class="title">Объявления</h2>
+        <h3 class="title">Фильтры</h3>
+        <!-- Форма фильтров -->
+        <form method="get" class="filter_form" action="{% url 'index_page' %}">
             <div>
                 <label for="price_min">Минимальная цена:</label>
                 <input type="number" id="price_min" name="price_min" value="{{ price_min }}">
@@ -122,57 +113,78 @@
                 </select>
             </div>
             <div>
-                <button type="submit" name="filter" value="all">Показать все</button>
-                <button type="submit" name="filter" value="below_2000000">Объявления до 2,000,000</button>
-                <button type="submit" name="filter" value="mortgage">Только с ипотекой</button>
-                <button type="submit" name="filter" value="good_deals">Выгодные предложения</button>
+                <button type="submit" class="filter_button">Применить фильтры</button>
             </div>
             <div>
-                <button type="submit">Применить фильтры</button>
+                <button type="submit" class="filter_button" name="filter" value="all">Показать все</button>
+                <button type="submit" class="filter_button" name="filter" value="below_2000000">Объявления до 2,000,000</button>
+                <button type="submit" class="filter_button" name="filter" value="mortgage">Только с ипотекой</button>
+                <button type="submit" class="filter_button" name="filter" value="good_deals">Выгодные предложения</button>
+                <!-- Новые кнопки -->
+                <button type="submit" class="filter_button" name="filter" value="high_rating">Только с высоким рейтингом</button>
+                <button type="submit" class="filter_button" name="filter" value="order_price">Сортировать по цене</button>
             </div>
-        </form>       
+        </form>
         <!-- Список объявлений -->
+        <h3 class="title">Список объявлений</h3>
         <div class="grid">
             {% for adver in page_obj %}
-            <div class="card">
-                {% if adver.image %}
-                    <img src="{{ adver.image.url }}" alt="Изображение квартиры">
-                {% else %}
-                    <img src="/static/images/placeholder.jpg" alt="Изображения Нет">
-                {% endif %}
-                <div class="card-body">
-                    <h5>{{ adver.apartment.address }} - {{ adver.apartment.area }} м²</h5>
-                    <p>Цена: ₽{{ adver.price }}</p>
-                    <p>Владелец: {{ adver.own }}</p>
-                    <p>Ипотека: {% if adver.mortgage %}Есть{% else %}Нет{% endif %}</p>
-                    <p>Рейтинг: {{ adver.score }}</p>
+                <div class="card">
+                    {% if adver.image %}
+                        <img src="{{ adver.image.url }}" alt="Изображение квартиры">
+                    {% else %}
+                        <img src="/static/images/placeholder.jpg" alt="Изображение отсутствует">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5>{{ adver.apartment.address}} - {{ adver.apartment.area }} м²</h5>
+                        <p>Цена: ₽{{ adver.price}}</p>
+                        <p>Владелец: {{ adver.own}}</p>
+                        <p>Ипотека: {% if adver.mortgage %}Есть{% else %}Нет{% endif %}</p>
+                        <p>Рейтинг: {{ adver.score }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ adver.apartment.get_absolute_url }}" class="btn_detail">Подробнее о квартире</a>
+                        <a href="{% url 'update_adver' adver.pk %}" class="btn-update">Редактировать</a>
+                        <form method="post" action="{% url 'delete_adver' adver.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn_delete" onclick="return confirm('Вы уверены, что хотите удалить это объявление?');">
+                                Удалить
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <a href="#">Подробнее</a>
-                </div>
-            </div>
             {% empty %}
-            <p>Нет объявлений, соответствующих фильтру.</p>
+                <p>Нет объявлений, соответствующих фильтру.</p>
             {% endfor %}
         </div>
-    
+
         <!-- Пагинация -->
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?page=1{% if current_filter %}&filter={{ current_filter }}{% endif %}">&laquo; Первая</a>
-                <a href="?page={{ page_obj.previous_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Предыдущая</a>
+                <a href="?page=1">&laquo; Первая</a>
+                <a href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
             {% endif %}
-    
+
             <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
-    
+
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Следующая</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if current_filter %}&filter={{ current_filter }}{% endif %}">Последняя &raquo;</a>
+                <a href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
             {% endif %}
         </div>
-    </div> 
+    </div>
     <footer class="footer">
-        <p>&copy; Dynasty 8, 2024</p>
+        <p>&copy; Dynasty 8, 2025</p>
+        <p>Телефон для связи +7(915) 044-98-11</p>
+        <div class="social-icons">
+            <!-- Telegram Icon -->
+            <a href="https://t.me/@artem127x" target="_blank" title="Наш Telegram">
+                <img src="{% static 'icons/telegram-icon.webp' %}" alt="Telegram" class="icon">
+            </a>
+            <!-- GitHub Icon -->
+            <a href="https://github.com/Losev127/Web-Dev-2024" target="_blank" title="Наш GitHub">
+                <img src="{% static 'icons/github-icon.png' %}" alt="GitHub" class="icon">
+            </a>
+        </div>
     </footer>
 </body>
-</html>
